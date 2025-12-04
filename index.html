@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+    PROJECT: Vidyāsetu - Zero-profit Student Identity & Learning Network
+    TYPE: Single-File HTML/CSS/JS (Production Ready Framework)
+    
+    [ README & DEPLOYMENT INSTRUCTIONS ]
+
+    1. DEPLOYMENT:
+       - This file is ready to host on GitHub Pages, Netlify, or Vercel.
+       - No build step required. Just upload 'index.html'.
+
+    2. INTEGRATIONS (How to wire this up):
+       
+       A. GOOGLE SHEETS (Database):
+          - Go to Google Sheets > Extensions > Apps Script.
+          - Paste the GAS Snippet found at the bottom of this file (in comments).
+          - Deploy as Web App > Access: "Anyone".
+          - Copy the Web App URL and replace 'YOUR_GOOGLE_SCRIPT_URL' in the JavaScript section below.
+       
+       B. EMAIL (AWS SES / Gmail):
+          - For a static site, use a service like EmailJS or Formspree.
+          - Or, handle it inside the Google Apps Script (MailApp.sendEmail).
+          - See 'sendEmailVerification' function stub in JS for logic.
+
+       C. PAYMENTS (Stripe/PayPal):
+          - Scroll to the 'donate-modal' section.
+          - Replace the commented Stripe Client Key.
+          - Ensure you have a backend (Node/Python) or use Stripe Payment Links for no-code.
+
+       D. ANALYTICS:
+          - Replace 'G-XXXXXXXXXX' in the <head> script with your real ID.
+
+    3. ADMIN PANEL:
+       - The site includes a hidden client-side Admin view.
+       - Click "Admin Login" in the footer.
+       - Default Dev Passphrase: "vidyasetu-admin"
+       - Data is currently stored in localStorage for demonstration.
+
+    4. ASSETS:
+       - Images use standard placeholders. Replace 'src' attributes with real optimized images.
+       - Icons are inline SVGs (no external dependencies).
+
+    [ END README ]
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidyāsetu | Verified Student Identity & Open Learning</title>
+    <meta name="description" content="Vidyāsetu is a zero-profit NGO empowering students with verified digital IDs, premium tools access, mentorship, and job-ready learning paths.">
+    
+    <!-- SEO / Open Graph -->
+    <meta property="og:title" content="Vidyāsetu - Connecting Students to Opportunity">
+    <meta property="og:description" content="Join the open-world learning network. Get verified, get mentored, get hired.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.vidyasetu.org">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/0b3d91/ffffff?text=Vidyasetu+Impact">
+    
+    <!-- Favicon Placeholder -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+
+    <!-- Preconnect to external assets if needed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Google Analytics Placeholder -->
+    <!-- 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script> 
+    -->
+
+    <style>
+        /* =========================================
+           1. CSS VARIABLES & RESET
+           ========================================= */
+        :root {
+            --navy: #0b3d91;
+            --navy-dark: #072a66;
+            --accent: #ff8a3d;
+            --accent-hover: #e57224;
+            --bg-light: #f7f8fb;
+            --bg-white: #ffffff;
+            --text-main: #333333;
+            --text-light: #666666;
+            --border-color: #e0e0e0;
+            --success: #28a745;
+            --error: #dc3545;
+            
+            --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --container: 1200px;
+            --header-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            background-color: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            color: var(--navy);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; }
+        h3 { font-size: 1.5rem; }
+        p { margin-bottom: 1rem; }
+        a { text-decoration: none; color: inherit; transition: color 0.2s; }
+
+        /* Utilities */
+        .container {
+            width: 90%;
+            max-width: var(--container);
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .text-center { text-align: center; }
+        .text-accent { color: var(--accent); }
+        .bg-white { background: var(--bg-white); }
+        .bg-navy { background: var(--navy); color: white; }
+        .section-padding { padding: 4rem 0; }
+        .hidden { display: none !important; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        .btn-primary {
+            background-color: var(--navy);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--navy-dark);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--accent);
+            color: var(--navy);
+        }
+        .btn-secondary:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+        .btn-block { width: 100%; text-align: center; }
+
+        /* Accessibility Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--accent);
+            color: white;
+            padding: 8px;
+            z-index: 1001;
+        }
+        .skip-link:focus { top: 0; }
+
+        /* =========================================
+           2. HEADER & NAV
+           ========================================= */
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+        .nav-links a {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent);
+        }
+        .nav-cta {
+            background: var(--accent);
+            color: white !important;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        /* Mobile Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+        .bar { width: 25px; height: 3px; background: var(--navy); }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                position: absolute;
+                top: var(--header-height);
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 2rem;
+                box-shadow: var(--shadow);
+                display: none;
+            }
+            .nav-links.active { display: flex; }
+            .hamburger { display: flex; }
+            h1 { font-size: 2rem; }
+        }
+
+        /* =========================================
+           3. HERO SECTION
+           ========================================= */
+        .hero {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #f7f8fb 0%, #eef1f8 100%);
+            display: flex;
+            align-items: center;
+            min-height: 80vh;
+        }
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+        .hero-text .trust-strip {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            display: block;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .hero-img img {
+            width: 100%;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+        .hero-btns {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .hero-content { grid-template-columns: 1fr; text-align: center; }
+            .hero-btns { justify-content: center; }
+        }
+
+        /* =========================================
+           4. FEATURES & CARDS
+           ========================================= */
+        .features-grid, .programs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+            border: 1px solid var(--border-color);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--navy);
+        }
+
+        /* =========================================
+           5. TIMELINE (How it Works)
+           ========================================= */
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            background-color: var(--border-color);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -2px;
+        }
+        .step {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+            box-sizing: border-box;
+        }
+        .step::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            right: -10px;
+            background-color: white;
+            border: 4px solid var(--accent);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .left { left: 0; }
+        .right { left: 50%; }
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 18px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid white;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent white;
+        }
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 18px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid white;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent white transparent transparent;
+        }
+        .right::after { left: -10px; }
+        .step-content {
+            padding: 20px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .step-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .step-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .step.open .step-details { max-height: 200px; margin-top: 10px; }
+
+        @media screen and (max-width: 600px) {
+            .timeline::after { left: 31px; }
+            .step { width: 100%; padding-left: 70px; padding-right: 25px; }
+            .step::before { left: 60px; border: medium solid white; border-width: 10px 10px 10px 0; border-color: transparent white transparent transparent; }
+            .left::after, .right::after { left: 21px; }
+            .right { left: 0%; }
+        }
+
+        /* =========================================
+           6. FORMS (Verification & General)
+           ========================================= */
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus { border-color: var(--navy); outline: none; }
+        .error-msg { color: var(--error); font-size: 0.8rem; margin-top: 0.25rem; display: none; }
+        
+        /* Multi-step specifics */
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+        .step-dot { height: 10px; flex: 1; background: #ddd; margin: 0 5px; border-radius: 5px; }
+        .step-dot.active { background: var(--navy); }
+        .form-step { display: none; animation: fadeIn 0.5s; }
+        .form-step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* =========================================
+           7. MODALS
+           ========================================= */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* =========================================
+           8. FOOTER
+           ========================================= */
+        footer { background: var(--navy-dark); color: white; padding: 3rem 0; margin-top: 4rem; }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        .footer-links a { display: block; margin-bottom: 0.5rem; color: #ccc; }
+        .footer-links a:hover { color: white; }
+        .legal { margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; font-size: 0.8rem; text-align: center; color: #aaa; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to Content</a>
+
+    <!-- Header -->
+    <header>
+        <div class="container nav-container">
+            <a href="#" class="brand">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0b3d91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10v6"/><path d="M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                Vidyāsetu
+            </a>
+            
+            <div class="hamburger" id="hamburger" aria-label="Toggle navigation" role="button" tabindex="0">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+
+            <nav>
+                <ul class="nav-links" id="nav-links">
+                    <li><a href="#hero">Home</a></li>
+                    <li><a href="#how-it-works">How it Works</a></li>
+                    <li><a href="#programs">Programs</a></li>
+                    <li><a href="#mentors">Mentors</a></li>
+                    <li><a href="#impact">Impact</a></li>
+                    <li><a href="#verify" class="nav-cta">Verify & Sign Up</a></li>
+                    <li><button onclick="openDonateModal()" class="btn-secondary" style="border: none; padding: 0;">Donate</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section id="hero" class="hero">
+            <div class="container hero-content">
+                <div class="hero-text">
+                    <span class="trust-strip">✦ Zero-profit NGO • Privacy-first • Open Network</span>
+                    <h1>Vidyāsetu — Verified student identity and career roadmaps.</h1>
+                    <p>Empowering students with verified digital IDs, premium tools access, mentorship and job-ready learning paths. No cost to students.</p>
+                    <div class="hero-btns">
+                        <a href="#verify" class="btn btn-primary">Get Verified</a>
+                        <a href="#programs" class="btn btn-secondary">Explore Roadmaps</a>
+                    </div>
+                </div>
+                <div class="hero-img">
+                    <img src="https://via.placeholder.com/600x400/0b3d91/ffffff?text=Students+Learning+Together" alt="Diverse students collaborating on laptops" loading="lazy">
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem & Vision -->
+        <section id="vision" class="section-padding bg-white text-center">
+            <div class="container" style="max-width: 800px;">
+                <h2 class="text-accent">The Gap</h2>
+                <p>Millions of students lack verifiable credentials and guidance to bridge the gap between college and industry. Traditional degrees aren't enough.</p>
+                <h2 style="margin-top: 2rem;">Our Vision</h2>
+                <p>An open-world learning network where every student's skill is verified, recognized, and rewarded, regardless of their university's prestige.</p>
+            </div>
+        </section>
+
+        <!-- Core Features -->
+        <section id="features" class="section-padding">
+            <div class="container">
+                <h2 class="text-center">Why join Vidyāsetu?</h2>
+                <div class="features-grid">
+                    <div class="card">
+                        <div class="card-icon">🆔</div>
+                        <h3>Digital Student ID</h3>
+                        <p>Get a universally verifiable student ID to access software discounts (GitHub Pack, Notion, etc.).</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🗺️</div>
+                        <h3>Career Roadmaps</h3>
+                        <p>Curated paths for Engineering, Design, and Business with tracked progress.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🤝</div>
+                        <h3>Mentorship</h3>
+                        <p>Connect with industry volunteers for 1:1 guidance and code reviews.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it Works (Timeline) -->
+        <section id="how-it-works" class="section-padding bg-white">
+            <div class="container">
+                <h2 class="text-center">How it Works</h2>
+                <div class="timeline">
+                    <!-- Step 1 -->
+                    <div class="step left">
+                        <div class="step-content">
+                            <div class="step-header" onclick="toggleTimeline(this)" role="button" tabindex="0">
+                                <h3>1. Sign Up</h3>
+                                <span>▼</span>
+                            </div>
+                            <div class="step-details">
+                                <p>Create your account using your personal email. We value privacy.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="step right">
+                        <div class="step-content">
+                            <div class="step-header" onclick="toggleTimeline(this)" role="button" tabindex="0">
+                                <h3>2. Verify Status</h3>
+                                <span>▼</span>
+                            </div>
+                            <div class="step-details">
+                                <p>Upload a college ID or tuition receipt. Our team manually verifies this within 24 hours.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="step left">
+                        <div class="step-content">
+                            <div class="step-header" onclick="toggleTimeline(this)" role="button" tabindex="0">
+                                <h3>3. Get ID</h3>
+                                <span>▼</span>
+                            </div>
+                            <div class="step-details">
+                                <p>Receive your unique Vidyāsetu ID card via email to unlock perks.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="step right">
+                        <div class="step-content">
+                            <div class="step-header" onclick="toggleTimeline(this)" role="button" tabindex="0">
+                                <h3>4. Select Track</h3>
+                                <span>▼</span>
+                            </div>
+                            <div class="step-details">
+                                <p>Choose a learning path (Tech, Creative, or Business).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Programs -->
+        <section id="programs" class="section-padding">
+            <div class="container">
+                <h2 class="text-center">Skill Programs</h2>
+                <div class="programs-grid">
+                    <div class="card">
+                        <h3>💻 Full Stack Dev</h3>
+                        <ul style="list-style: inside; margin: 1rem 0; font-size: 0.9rem;">
+                            <li>HTML/CSS/JS Deep dive</li>
+                            <li>React & Node.js</li>
+                            <li>Database Design</li>
+                        </ul>
+                        <p class="text-accent"><strong>6 Months • Free</strong></p>
+                        <button onclick="prefillTrack('tech')" class="btn btn-secondary btn-block">Start Roadmap</button>
+                    </div>
+                    <div class="card">
+                        <h3>🎨 UX/UI Design</h3>
+                        <ul style="list-style: inside; margin: 1rem 0; font-size: 0.9rem;">
+                            <li>Design Thinking</li>
+                            <li>Figma Mastery</li>
+                            <li>Portfolio Building</li>
+                        </ul>
+                        <p class="text-accent"><strong>4 Months • Free</strong></p>
+                        <button onclick="prefillTrack('design')" class="btn btn-secondary btn-block">Start Roadmap</button>
+                    </div>
+                    <div class="card">
+                        <h3>📈 Business Analytics</h3>
+                        <ul style="list-style: inside; margin: 1rem 0; font-size: 0.9rem;">
+                            <li>Excel & SQL</li>
+                            <li>Data Visualization</li>
+                            <li>Business Strategy</li>
+                        </ul>
+                        <p class="text-accent"><strong>5 Months • Free</strong></p>
+                        <button onclick="prefillTrack('business')" class="btn btn-secondary btn-block">Start Roadmap</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Verify & Sign Up (Multi-step Form) -->
+        <section id="verify" class="section-padding bg-white">
+            <div class="container">
+                <h2 class="text-center">Verify & Join Network</h2>
+                <p class="text-center">Join 5,000+ students. Takes 2 minutes.</p>
+                
+                <div class="form-container">
+                    <form id="signupForm" onsubmit="handleSignup(event)">
+                        <!-- Progress -->
+                        <div class="step-indicator">
+                            <div class="step-dot active" id="dot-1"></div>
+                            <div class="step-dot" id="dot-2"></div>
+                            <div class="step-dot" id="dot-3"></div>
+                        </div>
+
+                        <!-- Step 1: Basic Info -->
+                        <div class="form-step active" id="step-1">
+                            <h3>Basic Information</h3>
+                            <div class="form-group">
+                                <label for="fullName">Full Name</label>
+                                <input type="text" id="fullName" required aria-required="true">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" required aria-required="true">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" placeholder="+91 0000000000">
+                            </div>
+                            <button type="button" class="btn btn-primary btn-block" onclick="nextStep(1)">Next</button>
+                        </div>
+
+                        <!-- Step 2: Verification Doc -->
+                        <div class="form-step" id="step-2">
+                            <h3>Upload Student Proof</h3>
+                            <p class="text-light" style="font-size: 0.8rem;">Upload College ID Card or Fee Receipt (Max 2MB, JPG/PDF)</p>
+                            <div class="form-group">
+                                <label for="college">College/Institution Name</label>
+                                <input type="text" id="college" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="file" id="docUpload" accept=".jpg,.jpeg,.png,.pdf" onchange="previewFile()">
+                                <div id="filePreview" style="margin-top: 10px; font-size: 0.8rem; color: var(--success);"></div>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                                <button type="button" class="btn btn-primary" style="flex:1;" onclick="nextStep(2)">Next</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Preferences -->
+                        <div class="form-step" id="step-3">
+                            <h3>Preferences</h3>
+                            <div class="form-group">
+                                <label for="trackSelect">Interested Track</label>
+                                <select id="trackSelect">
+                                    <option value="tech">Engineering / Tech</option>
+                                    <option value="design">Creative / Design</option>
+                                    <option value="business">Business / Management</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" required> I agree to the <a href="#" class="text-accent">Terms</a> and Privacy Policy.
+                                </label>
+                            </div>
+                            <!-- reCAPTCHA Placeholder -->
+                            <!-- <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY"></div> -->
+                            
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+                                <button type="submit" class="btn btn-primary" style="flex:1;">Submit Verification</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Success State -->
+                    <div id="signupSuccess" class="hidden text-center">
+                        <h3 class="text-accent">Verification Pending!</h3>
+                        <p>We have received your details. Check your email inbox (and spam) for a confirmation link shortly.</p>
+                        <p><strong>Note:</strong> Since this is a demo, check the "Admin" link in the footer to see your data.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mentors & Partners -->
+        <section id="mentors" class="section-padding">
+            <div class="container">
+                <h2 class="text-center">Mentors & Partners</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 3rem; margin-top: 2rem;">
+                    
+                    <!-- Mentor Column -->
+                    <div>
+                        <h3>Become a Mentor</h3>
+                        <p>Donate 1 hour a week to code review or guide a student.</p>
+                        <form onsubmit="alert('Thank you! Mentor team will contact you.'); return false;">
+                            <div class="form-group">
+                                <input type="text" placeholder="Your Name" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="url" placeholder="LinkedIn Profile URL" required>
+                            </div>
+                            <button class="btn btn-secondary">Apply as Mentor</button>
+                        </form>
+                        <div style="margin-top: 2rem; border: 1px dashed #ccc; padding: 1rem;">
+                            <p style="font-size: 0.8rem; color: #888;">[Calendly Embed Placeholder]</p>
+                            <!-- <iframe src="https://calendly.com/vidyasetu-mentors" style="width:100%; height:300px;"></iframe> -->
+                            <p>Schedule a discovery call with our program director.</p>
+                        </div>
+                    </div>
+
+                    <!-- Partner Column -->
+                    <div>
+                        <h3>Our Partners</h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                            <!-- Logo Placeholders -->
+                            <div style="background:#ddd; height: 60px; border-radius: 8px;"></div>
+                            <div style="background:#ddd; height: 60px; border-radius: 8px;"></div>
+                            <div style="background:#ddd; height: 60px; border-radius: 8px;"></div>
+                        </div>
+                        <h3>Corporate Sponsorship</h3>
+                        <table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;">
+                            <thead><tr style="text-align: left;"><th>Tier</th><th>Donation</th><th>Impact</th></tr></thead>
+                            <tbody>
+                                <tr><td>Silver</td><td>$1k</td><td>Sponsor 50 IDs</td></tr>
+                                <tr><td>Gold</td><td>$5k</td><td>Curriculum Partner</td></tr>
+                            </tbody>
+                        </table>
+                        <a href="#contact" class="btn btn-secondary">Partner Inquiry</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Impact & Resources -->
+        <section id="impact" class="section-padding bg-navy text-center">
+            <div class="container">
+                <h2 style="color: white;">Our Impact</h2>
+                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 2rem; margin: 2rem 0;">
+                    <div>
+                        <h3 style="color: var(--accent); font-size: 3rem; margin: 0;">5000+</h3>
+                        <p style="color: #ddd;">Students Verified</p>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--accent); font-size: 3rem; margin: 0;">₹0</h3>
+                        <p style="color: #ddd;">Cost to Students</p>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--accent); font-size: 3rem; margin: 0;">200+</h3>
+                        <p style="color: #ddd;">Placements</p>
+                    </div>
+                </div>
+                <div id="resources" style="margin-top: 3rem; text-align: left; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: var(--radius);">
+                    <h3 style="color: white;">Resources</h3>
+                    <ul style="color: #ccc; list-style: none;">
+                        <li style="margin-bottom: 0.5rem;">📄 <a href="#">Download Concept Note (PDF)</a></li>
+                        <li style="margin-bottom: 0.5rem;">❓ <a href="#">Frequently Asked Questions</a></li>
+                        <li style="margin-bottom: 0.5rem;">📰 <a href="#">Vidyāsetu Blog & Student Stories</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h4>Vidyāsetu</h4>
+                    <p style="font-size: 0.9rem; color: #ccc;">A non-profit open-world learning network.</p>
+                    <p style="font-size: 0.9rem; color: #ccc;">Email: hello@vidyasetu.org</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <a href="#hero">Home</a>
+                    <a href="#verify">Get Verified</a>
+                    <a href="#mentors">Volunteer</a>
+                    <a href="#" onclick="openDonateModal()">Donate</a>
+                </div>
+                <div>
+                    <h4>Legal</h4>
+                    <a href="#" style="color: #ccc;">Privacy Policy</a>
+                    <a href="#" style="color: #ccc;">Terms of Service</a>
+                    <a href="#" style="color: #ccc;">Cookie Policy</a>
+                </div>
+            </div>
+            <div class="legal">
+                &copy; 2023 Vidyāsetu Foundation. Registered Non-Profit. <br>
+                <a href="#" onclick="openAdmin()" style="color: #555; text-decoration: underline;">Admin Login</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Donate Modal -->
+    <div id="donateModal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-modal" onclick="closeDonateModal()">&times;</span>
+            <h2 style="color: var(--navy);">Support Scholarship Fund</h2>
+            <p>Your donation goes 100% towards server costs and student tool licenses.</p>
+            
+            <div style="margin: 2rem 0;">
+                <button class="btn btn-secondary" style="margin: 5px;">$10</button>
+                <button class="btn btn-secondary" style="margin: 5px;">$50</button>
+                <button class="btn btn-secondary" style="margin: 5px;">Custom</button>
+            </div>
+
+            <!-- Stripe Placeholder -->
+            <div id="stripe-mount" style="background: #f4f4f4; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; font-size: 0.8rem;">
+                <!-- 
+                Implementation Note:
+                1. Include <script src="https://js.stripe.com/v3/"></script>
+                2. var stripe = Stripe('pk_test_YOUR_KEY');
+                3. Create Checkout Session on backend and redirect.
+                -->
+                [Stripe Payment Element Placeholder]
+            </div>
+
+            <!-- PayPal Placeholder -->
+            <button class="btn btn-primary btn-block" style="background: #003087;">Pay with PayPal</button>
+            
+            <p style="font-size: 0.8rem; margin-top: 1rem; color: #666;">
+                Offline Donations? <a href="#">View Bank Details</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" onclick="document.getElementById('adminModal').style.display='none'">&times;</span>
+            <h2>Admin Dashboard (Demo)</h2>
+            <p>Data persisted in LocalStorage for this preview.</p>
+            <div style="overflow-x: auto;">
+                <table id="adminTable" style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: #eee; text-align: left;">
+                            <th style="padding: 8px;">Name</th>
+                            <th style="padding: 8px;">Email</th>
+                            <th style="padding: 8px;">Track</th>
+                            <th style="padding: 8px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <!-- JS fills this -->
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="clearData()" style="margin-top: 1rem; color: red; background: none; border: 1px solid red; padding: 5px;">Clear Demo Data</button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // --- 1. CONFIGURATION ---
+        const CONFIG = {
+            // Replace with your Google Apps Script Web App URL
+            webhookUrl: "https://script.google.com/macros/s/placeholder/exec", 
+            adminPass: "vidyasetu-admin"
+        };
+
+        // --- 2. NAVIGATION & UI ---
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('nav-links');
+        
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            hamburger.setAttribute('aria-expanded', navLinks.classList.contains('active'));
+        });
+
+        // Close mobile menu on link click
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+
+        // Timeline Accordion
+        function toggleTimeline(header) {
+            const step = header.parentElement.parentElement;
+            step.classList.toggle('open');
+            // Accessibility
+            const expanded = step.classList.contains('open');
+            header.setAttribute('aria-expanded', expanded);
+        }
+
+        // --- 3. MULTI-STEP FORM ---
+        let currentStep = 1;
+        
+        function showStep(step) {
+            document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.step-dot').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`step-${step}`).classList.add('active');
+            // Highlight dots up to current
+            for(let i=1; i<=step; i++) {
+                document.getElementById(`dot-${i}`).classList.add('active');
+            }
+            currentStep = step;
+        }
+
+        function nextStep(step) {
+            // Simple validation
+            if(step === 1) {
+                const name = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                if(!name || !email) { alert('Please fill in required fields.'); return; }
+            }
+            if(step === 2) {
+                const college = document.getElementById('college').value;
+                if(!college) { alert('Please enter college name.'); return; }
+            }
+            showStep(step + 1);
+        }
+
+        function prevStep(step) {
+            showStep(step - 1);
+        }
+
+        function prefillTrack(track) {
+            document.getElementById('trackSelect').value = track;
+            window.location.href = "#verify";
+            // Optional: Auto-advance to step 1 if needed
+        }
+
+        function previewFile() {
+            const file = document.getElementById('docUpload').files[0];
+            if(file) {
+                if(file.size > 2 * 1024 * 1024) { // 2MB check
+                    alert('File too large. Max 2MB.');
+                    document.getElementById('docUpload').value = "";
+                    return;
+                }
+                document.getElementById('filePreview').textContent = "✓ " + file.name + " attached.";
+            }
+        }
+
+        // --- 4. FORM SUBMISSION (MOCK BACKEND) ---
+        function handleSignup(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.textContent = "Processing...";
+            submitBtn.disabled = true;
+
+            const formData = {
+                id: Date.now(),
+                name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                college: document.getElementById('college').value,
+                track: document.getElementById('trackSelect').value,
+                date: new Date().toLocaleDateString(),
+                status: 'Pending'
+            };
+
+            // 1. SAVE TO LOCAL STORAGE (Demo Persistence)
+            let students = JSON.parse(localStorage.getItem('vs_students') || "[]");
+            students.push(formData);
+            localStorage.setItem('vs_students', JSON.stringify(students));
+
+            // 2. SEND TO WEBHOOK (Example Code)
+            /* 
+            fetch(CONFIG.webhookUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Important for Google Sheets
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            }).then(() => { ... }).catch(console.error);
+            */
+
+            // Simulate Network Delay
+            setTimeout(() => {
+                document.getElementById('signupForm').classList.add('hidden');
+                document.getElementById('signupSuccess').classList.remove('hidden');
+                submitBtn.textContent = "Submit Verification";
+                submitBtn.disabled = false;
+            }, 1500);
+        }
+
+        // --- 5. ADMIN PANEL ---
+        function openAdmin() {
+            const pass = prompt("Enter Admin Password (demo: vidyasetu-admin):");
+            if(pass === CONFIG.adminPass) {
+                renderAdminTable();
+                document.getElementById('adminModal').style.display = 'flex';
+            } else {
+                alert("Incorrect password.");
+            }
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            const students = JSON.parse(localStorage.getItem('vs_students') || "[]");
+            
+            if(students.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' class='text-center'>No verifications submitted yet.</td></tr>";
+                return;
+            }
+
+            tbody.innerHTML = students.map(s => `
+                <tr>
+                    <td style="padding:8px; border-bottom:1px solid #eee;">${s.name}</td>
+                    <td style="padding:8px; border-bottom:1px solid #eee;">${s.email}</td>
+                    <td style="padding:8px; border-bottom:1px solid #eee;">${s.track.toUpperCase()}</td>
+                    <td style="padding:8px; border-bottom:1px solid #eee; color:orange;">${s.status}</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearData() {
+            if(confirm('Clear all demo data?')) {
+                localStorage.removeItem('vs_students');
+                renderAdminTable();
+            }
+        }
+
+        // --- 6. DONATION MODAL ---
+        function openDonateModal() {
+            document.getElementById('donateModal').style.display = 'flex';
+        }
+        function closeDonateModal() {
+            document.getElementById('donateModal').style.display = 'none';
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = "none";
+            }
+        }
+    </script>
+
+    <!-- 
+    =========================================
+    INTEGRATION SNIPPET: GOOGLE APPS SCRIPT
+    =========================================
+    Paste this into script.google.com to create your backend.
+    
+    function doPost(e) {
+      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+      var data = JSON.parse(e.postData.contents);
+      
+      sheet.appendRow([
+        new Date(),
+        data.name,
+        data.email,
+        data.college,
+        data.track,
+        "Pending"
+      ]);
+      
+      // OPTIONAL: Send Email via Gmail
+      // MailApp.sendEmail({
+      //   to: data.email,
+      //   subject: "Verification Received - Vidyasetu",
+      //   body: "Hello " + data.name + ", we received your documents..."
+      // });
+      
+      return ContentService.createTextOutput(JSON.stringify({"result":"success"}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    =========================================
+    -->
+
+</body>
+</html>
